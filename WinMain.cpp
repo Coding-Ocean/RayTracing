@@ -124,7 +124,18 @@ public:
 	vec3 dir;
 };
 
+bool hit_sphere(const point3& center, double radius, const ray& r) {
+	vec3 oc = r.origin() - center;
+	auto a = dot(r.direction(), r.direction());
+	auto b = 2.0 * dot(oc, r.direction());
+	auto c = dot(oc, oc) - radius * radius;
+	auto discriminant = b * b - 4 * a * c;
+	return (discriminant > 0);
+}
+
 color ray_color(const ray& r) {
+	if (hit_sphere(point3(0, 0, -1), 0.5, r))
+		return color(1, 0, 0);
 	vec3 unit_direction = unit_vector(r.direction());
 	auto t = 0.5 * (unit_direction.y() + 1.0);
 	return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0);
@@ -133,8 +144,8 @@ color ray_color(const ray& r) {
 const auto aspect_ratio = 16.0 / 9.0;
 const int image_width = 384;
 const int image_height = static_cast<int>(image_width / aspect_ratio);
-void gmain() {
 
+void gmain() {
 	std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
 
 	auto viewport_height = 2.0;
