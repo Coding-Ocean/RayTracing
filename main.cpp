@@ -1,10 +1,9 @@
-#pragma comment(lib,"winmm.lib")
-
 #include <iostream>
 #include <vector>
 #include <memory>
 #include <cmath>
 #include <random>
+#include <chrono>
 
 using std::sqrt;
 using std::shared_ptr;
@@ -180,7 +179,7 @@ using color = vec3;    // RGB 色
 
 uint8_t* pixels = nullptr;//下方のDirectXで、ここに書き込まれた絵をテクスチャにして表示する
 int idx = 0;
-void write_color(std::ostream& out, color pixel_color, int samples_per_pixel) {
+void write_color(const color& pixel_color, int samples_per_pixel) {
 	auto r = pixel_color.x();
 	auto g = pixel_color.y();
 	auto b = pixel_color.z();
@@ -487,9 +486,9 @@ hittable_list random_scene() {
 
 	auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
 	world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
-
-	for (int a = -7; a < 7; a++) {
-		for (int b = -7; b < 7; b++) {
+	int range = 10;
+	for (int a = -range; a <= range; a++) {
+		for (int b = -range; b <= range; b++) {
 			auto choose_mat = random_double();
 			point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
 
@@ -530,18 +529,6 @@ hittable_list random_scene() {
 	return world;
 }
 
-#include<Windows.h>
-void debugStr(const char* format, ...)
-{
-	char str[256];
-	va_list args;
-	va_start(args, format);
-	vsprintf_s(str, format, args);
-	va_end(args);
-
-	OutputDebugStringA(str);
-}
-
 const char* output_filename = "image.png";
 const auto aspect_ratio = 16.0 / 9.0;
 const int image_width = 384;
@@ -557,11 +544,12 @@ void gmain() {
 	vec3 vup(0, 1, 0);
 	auto dist_to_focus = 10.0;
 	auto aperture = 0.1;
-	uint64_t beginTime = timeGetTime();
 	camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus);
+	
+	auto start = std::chrono::high_resolution_clock::now();
 
 	for (int j = image_height - 1; j >= 0; --j) {
-		debugStr("Scanlines remaining:%d\n", j);
+		std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
 		for (int i = 0; i < image_width; ++i) {
 			color pixel_color(0, 0, 0);
 			for (int s = 0; s < samples_per_pixel; ++s) {
@@ -570,11 +558,13 @@ void gmain() {
 				ray r = cam.get_ray(u, v);
 				pixel_color += ray_color(r, world, max_depth);
 			}
-			write_color(std::cout, pixel_color, samples_per_pixel);
+			write_color(pixel_color, samples_per_pixel);
 		}
 	}
 
-	debugStr("Done. %.2fsec\n",(timeGetTime()-beginTime)/1000.0f);
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+	std::cerr << "\n処理時間:" << duration.count() << "秒" << std::endl;
 }
 
 
@@ -593,9 +583,9 @@ void gmain() {
 #pragma comment(lib,"d3d12.lib")
 
 #include<fstream>
+#include<Windows.h>
 #include<dxgi1_6.h>
 #include<d3d12.h>
-#include<cmath>
 #include<cassert>
 #include<DirectXMath.h>
 #include<wrl.h>//ComPtr
@@ -665,7 +655,8 @@ D3D12_VERTEX_BUFFER_VIEW Vbv;
 ComPtr<ID3D12Resource> TextureBuffer = nullptr;
 
 //エントリーポイント
-INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
+//INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
+int main()
 {
 	//システム
 	{
