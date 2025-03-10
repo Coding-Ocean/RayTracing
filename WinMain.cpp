@@ -488,8 +488,8 @@ hittable_list random_scene() {
 	auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
 	world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
 
-	for (int a = -11; a < 11; a++) {
-		for (int b = -11; b < 11; b++) {
+	for (int a = -7; a < 7; a++) {
+		for (int b = -7; b < 7; b++) {
 			auto choose_mat = random_double();
 			point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
 
@@ -542,6 +542,7 @@ void debugStr(const char* format, ...)
 	OutputDebugStringA(str);
 }
 
+const char* output_filename = "image.png";
 const auto aspect_ratio = 16.0 / 9.0;
 const int image_width = 384;
 const int image_height = static_cast<int>(image_width / aspect_ratio);
@@ -577,18 +578,6 @@ void gmain() {
 }
 
 
-/*
-uint8_t* pixels = nullptr;//下方のDirectXで、ここに書き込まれた絵をテクスチャにして表示する
-int idx = 0;
-void write_color(std::ostream& out, color& pixel_color) {
-	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.x());
-	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.y());
-	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.z());
-	pixels[idx++] = 255;
-}
-*/
-
-
 
 
 
@@ -610,6 +599,9 @@ void write_color(std::ostream& out, color& pixel_color) {
 #include<cassert>
 #include<DirectXMath.h>
 #include<wrl.h>//ComPtr
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include"stb_image_write.h"
 
 using namespace DirectX;
 using namespace Microsoft::WRL;//ComPtr
@@ -1105,6 +1097,8 @@ INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
 				int bytePerPixel = 4;
 				pixels = new uint8_t[image_width * image_height * bytePerPixel];
 				gmain();
+
+				stbi_write_png(output_filename, image_width, image_height, bytePerPixel, pixels, image_width * bytePerPixel);
 
 				//１行のピッチを256の倍数にしておく(バッファサイズは256の倍数でなければいけない)
 				const UINT64 alignedRowPitch = (image_width * bytePerPixel + 0xff) & ~0xff;
