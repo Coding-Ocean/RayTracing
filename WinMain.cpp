@@ -6,19 +6,18 @@ struct vec3 {
 };
 typedef vec3 color;
 
-struct RGBA {
-	uint8_t r, g, b, a;
-}*Pixels;
+uint8_t* pixels;//下方のDirectXで、ここに書き込まれた絵をテクスチャにして表示する
 int idx = 0;
 void write_color(std::ostream& out, color pixel_color) {
-	auto r = static_cast<uint8_t>(255.999 * pixel_color.x);
-	auto g = static_cast<uint8_t>(255.999 * pixel_color.y);
-	auto b = static_cast<uint8_t>(255.999 * pixel_color.z);
-	Pixels[idx++] = { r, g, b, 255 };
+	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.x);
+	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.y);
+	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.z);
+	pixels[idx++] = 255;
 }
 
 int image_width = 512;
 int image_height = 512;
+
 void gmain() {
 	for (int j = image_height - 1; j >= 0; --j) {
 		for (int i = 0; i < image_width; ++i) {
@@ -30,6 +29,17 @@ void gmain() {
 		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 //テクスチャ表示のための記述---------------------------------------------------------
@@ -85,7 +95,7 @@ ComPtr<ID3D12Resource> BackBuffers[2];
 UINT BackBufIdx;
 ComPtr<ID3D12DescriptorHeap> BbvHeap;//"Bbv"は"BackBufferView"の略
 UINT BbvIncSize;
-float ClearColor[] = { 0.25f, 0.5f, 0.9f, 1.0f };
+float ClearColor[] = { 0.f, 0.f, 0.f, 1.0f };
 //　デプスステンシルバッファ
 ComPtr<ID3D12Resource> DepthStencilBuffer;
 ComPtr<ID3D12DescriptorHeap> DsvHeap;//"Dsv"は"DepthStencilBufferView"の略
@@ -507,8 +517,8 @@ INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
 			//ファイルを読み込み、バッファをつくって、データを入れる
 			{
 				//テクスチャを作る
-				Pixels = new RGBA[image_width * image_height];
 				int bytePerPixel = 4;
+				pixels = new uint8_t[image_width * image_height * bytePerPixel];
 				gmain();
 
 				//１行のピッチを256の倍数にしておく(バッファサイズは256の倍数でなければいけない)
@@ -547,7 +557,7 @@ INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
 					//生データをuploadbuffに一旦コピーします
 					uint8_t* mapBuf = nullptr;
 					Hr = uploadBuf->Map(0, nullptr, (void**)&mapBuf);//マップ
-					auto srcAddress = (unsigned char*)Pixels;
+					auto srcAddress = pixels;
 					auto originalRowPitch = image_width * bytePerPixel;
 					for (int y = 0; y < image_height; ++y) {
 						memcpy(mapBuf, srcAddress, originalRowPitch);
@@ -633,7 +643,7 @@ INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
 				assert(SUCCEEDED(Hr));
 
 				//開放
-				delete[]Pixels;
+				delete[]pixels;
 			}{}
 			//テクスチャバッファの「ビュー」を「ディスクリプタヒープ」につくる
 			{
