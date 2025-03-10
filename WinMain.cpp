@@ -6,7 +6,7 @@ struct vec3 {
 };
 typedef vec3 color;
 
-uint8_t* pixels;//下方のDirectXで、ここに書き込まれた絵をテクスチャにして表示する
+uint8_t* pixels = nullptr;//下方のDirectXで、ここに書き込まれた絵をテクスチャにして表示する
 int idx = 0;
 void write_color(std::ostream& out, color pixel_color) {
 	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.x);
@@ -46,6 +46,7 @@ void gmain() {
 #pragma comment(lib,"dxgi.lib")
 #pragma comment(lib,"d3d12.lib")
 
+#include<fstream>
 #include<dxgi1_6.h>
 #include<d3d12.h>
 #include<cmath>
@@ -53,9 +54,6 @@ void gmain() {
 #include<Windows.h>
 #include<DirectXMath.h>
 #include<wrl.h>//ComPtr
-
-#define STB_IMAGE_IMPLEMENTATION
-#include"BIN_FILE12.h"
 
 using namespace DirectX;
 using namespace Microsoft::WRL;//ComPtr
@@ -355,7 +353,38 @@ INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
 		}
 		//パイプライン
 		{
-
+			//コンパイル済みシェーダを読み込むファイルバッファ
+			class BIN_FILE12 {
+			public:
+				BIN_FILE12(const char* fileName) :Succeeded(false)
+				{
+					std::ifstream ifs(fileName, std::ios::binary);
+					if (ifs.fail()) {
+						return;
+					}
+					Succeeded = true;
+					std::istreambuf_iterator<char> first(ifs);
+					std::istreambuf_iterator<char> last;
+					Buffer.assign(first, last);
+					ifs.close();
+				}
+				bool succeeded() const
+				{
+					return Succeeded;
+				}
+				unsigned char* code() const
+				{
+					char* p = const_cast<char*>(Buffer.data());
+					return reinterpret_cast<unsigned char*>(p);
+				}
+				size_t size() const
+				{
+					return Buffer.size();
+				}
+			private:
+				std::string Buffer;
+				bool Succeeded;
+			};
 			//シェーダ読み込み
 			BIN_FILE12 vs("assets\\VertexShader.cso");
 			assert(vs.succeeded());
@@ -514,9 +543,9 @@ INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
 		}
 		//テクスチャバッファ
 		{
-			//ファイルを読み込み、バッファをつくって、データを入れる
+			//バッファをつくって、pixelsデータを入れる
 			{
-				//テクスチャを作る
+				//pixelsを作る
 				int bytePerPixel = 4;
 				pixels = new uint8_t[image_width * image_height * bytePerPixel];
 				gmain();
@@ -737,18 +766,15 @@ INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
 	while (true)
 	{
 		//ウィンドウメッセージの取得、送出
-		{
-			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-				if (msg.message == WM_QUIT)
-					break;
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-				continue;
-			}
-			Sleep(1);
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+			if (msg.message == WM_QUIT)
+				break;
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+			continue;
 		}
-	} {}
-
+		Sleep(1);
+	}
 	//解放
 	{
 		waitGPU();

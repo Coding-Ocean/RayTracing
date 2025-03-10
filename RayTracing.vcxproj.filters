@@ -14,11 +14,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BIN_FILE12.h">
-      <Filter>lib</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="WinMain.cpp">
       <Filter>lib</Filter>
     </ClCompile>
