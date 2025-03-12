@@ -135,7 +135,7 @@ const int image_width = 384;
 const int image_height = static_cast<int>(image_width / aspect_ratio);
 void gmain() {
 
-	std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
+	//std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
 
 	auto viewport_height = 2.0;
 	auto viewport_width = aspect_ratio * viewport_height;
@@ -251,7 +251,8 @@ D3D12_VERTEX_BUFFER_VIEW Vbv;
 ComPtr<ID3D12Resource> TextureBuffer = nullptr;
 
 //エントリーポイント
-INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
+//INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
+int main()
 {
 	//システム
 	{
