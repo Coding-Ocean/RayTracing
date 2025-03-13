@@ -549,7 +549,7 @@ void gmain() {
 	auto start = std::chrono::high_resolution_clock::now();
 
 	for (int j = image_height - 1; j >= 0; --j) {
-		std::cout << "Scanlines remaining:" << j << std::endl;
+		std::cout << "\rScanlines remaining:" << j << " " << std::flush;
 		for (int i = 0; i < image_width; ++i) {
 			color pixel_color(0, 0, 0);
 			for (int s = 0; s < samples_per_pixel; ++s) {
@@ -564,7 +564,7 @@ void gmain() {
 
 	auto end = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-	std::cout << "ˆ—ŠÔ:" << duration.count() << "•b" << std::endl;
+	std::cout << "\nˆ—ŠÔ:" << duration.count() << "•b\n";
 }
 
 
