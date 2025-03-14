@@ -98,7 +98,7 @@ using color = vec3;    // RGB 色
 
 uint8_t* pixels = nullptr;//下方のDirectXで、ここに書き込まれた絵をテクスチャにして表示する
 int idx = 0;
-void write_color(std::ostream& out, color& pixel_color) {
+void write_color(color& pixel_color) {
 	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.x());
 	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.y());
 	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.z());
@@ -146,8 +146,6 @@ const int image_width = 384;
 const int image_height = static_cast<int>(image_width / aspect_ratio);
 
 void gmain() {
-	std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
-
 	auto viewport_height = 2.0;
 	auto viewport_width = aspect_ratio * viewport_height;
 	auto focal_length = 1.0;
@@ -162,9 +160,9 @@ void gmain() {
 		for (int i = 0; i < image_width; ++i) {
 			auto u = double(i) / (image_width - 1);
 			auto v = double(j) / (image_height - 1);
-			ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
+			ray r(origin, (lower_left_corner + u * horizontal + v * vertical) - origin);
 			color pixel_color = ray_color(r);
-			write_color(std::cout, pixel_color);
+			write_color(pixel_color);
 		}
 	}
 
