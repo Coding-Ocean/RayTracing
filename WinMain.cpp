@@ -8,15 +8,15 @@ typedef vec3 color;
 
 uint8_t* pixels = nullptr;//下方のDirectXで、ここに書き込まれた絵をテクスチャにして表示する
 int idx = 0;
-void write_color(std::ostream& out, color pixel_color) {
+void write_color(color& pixel_color) {
 	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.x);
 	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.y);
 	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.z);
 	pixels[idx++] = 255;
 }
 
-int image_width = 512;
-int image_height = 512;
+int image_width = 384;
+int image_height = 384;
 
 void gmain() {
 	for (int j = image_height - 1; j >= 0; --j) {
@@ -25,7 +25,7 @@ void gmain() {
 				double(i) / (image_width - 1),
 				double(j) / (image_height - 1),
 				0.25);
-			write_color(std::cout, pixel_color);
+			write_color(pixel_color);
 		}
 	}
 }
