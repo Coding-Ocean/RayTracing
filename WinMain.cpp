@@ -317,12 +317,12 @@ private:
 	vec3 vertical;
 };
 
-//vec3 random_unit_vector() {
-//	auto a = random_double(0, 2 * pi);
-//	auto z = random_double(-1, 1);
-//	auto r = sqrt(1 - z * z);
-//	return vec3(r * cos(a), r * sin(a), z);
-//}
+vec3 random_unit_vector() {
+	auto a = random_double(0, 2 * pi);
+	auto z = random_double(-1, 1);
+	auto r = sqrt(1 - z * z);
+	return vec3(r * cos(a), r * sin(a), z);
+}
 
 color ray_color(const ray& r, const hittable& world, int depth) {
 	hit_record rec;
@@ -331,9 +331,8 @@ color ray_color(const ray& r, const hittable& world, int depth) {
 	if (depth <= 0)
 		return color(0, 0, 0);
 
-	if (world.hit(r, 0, infinity, rec)) {
-		point3 target = rec.p + rec.normal + random_in_unit_sphere();
-		//point3 target = rec.p + rec.normal + random_unit_vector();
+	if (world.hit(r, 0.001, infinity, rec)) {
+		point3 target = rec.p + rec.normal + random_unit_vector();
 		return 0.5 * ray_color(ray(rec.p, target - rec.p), world, depth - 1);
 	}
 
