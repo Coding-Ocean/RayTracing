@@ -324,6 +324,14 @@ vec3 random_unit_vector() {
 	return vec3(r * cos(a), r * sin(a), z);
 }
 
+vec3 random_in_hemisphere(const vec3& normal) {
+	vec3 in_unit_sphere = random_in_unit_sphere();
+	if (dot(in_unit_sphere, normal) > 0.0)
+		return in_unit_sphere; // in_unit_sphere ‚Í normal ‚Æ“¯‚¶”¼‹…‚É‚ ‚é
+	else
+		return -in_unit_sphere;
+}
+
 color ray_color(const ray& r, const hittable& world, int depth) {
 	hit_record rec;
 
@@ -332,7 +340,8 @@ color ray_color(const ray& r, const hittable& world, int depth) {
 		return color(0, 0, 0);
 
 	if (world.hit(r, 0.001, infinity, rec)) {
-		point3 target = rec.p + rec.normal + random_unit_vector();
+		//point3 target = rec.p + rec.normal + random_unit_vector();
+		point3 target = rec.p + random_in_hemisphere(rec.normal);
 		return 0.5 * ray_color(ray(rec.p, target - rec.p), world, depth - 1);
 	}
 
