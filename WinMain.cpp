@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include <cmath>
+#include <random>
 
 using std::sqrt;
 using std::shared_ptr;
@@ -14,6 +15,28 @@ const double pi = 3.1415926535897932385;
 
 inline double degrees_to_radians(double degrees) {
 	return degrees * pi / 180;
+}
+
+inline double random_double() {
+	// [0,1) の実数乱数を返す
+	return rand() / (RAND_MAX + 1.0);
+}
+
+inline double random_double(double min, double max) {
+	// [min,max) の実数乱数を返す
+	return min + (max - min) * random_double();
+}
+
+inline double random_double_cpp() {
+	static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+	static std::mt19937 generator;
+	return distribution(generator);
+}
+
+inline double clamp(double x, double min, double max) {
+	if (x < min) return min;
+	if (x > max) return max;
+	return x;
 }
 
 // ベクトルクラス
@@ -113,10 +136,20 @@ using color = vec3;    // RGB 色
 
 uint8_t* pixels = nullptr;//下方のDirectXで、ここに書き込まれた絵をテクスチャにして表示する
 int idx = 0;
-void write_color(std::ostream& out, color& pixel_color) {
-	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.x());
-	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.y());
-	pixels[idx++] = static_cast<uint8_t>(255.999 * pixel_color.z());
+void write_color(std::ostream& out, color& pixel_color, int samples_per_pixel) {
+	auto r = pixel_color.x();
+	auto g = pixel_color.y();
+	auto b = pixel_color.z();
+
+	// 色の合計をサンプル数で割る
+	auto scale = 1.0 / samples_per_pixel;
+	r *= scale;
+	g *= scale;
+	b *= scale;
+
+	pixels[idx++] = static_cast<uint8_t>(256 * clamp(r, 0.0, 0.999));
+	pixels[idx++] = static_cast<uint8_t>(256 * clamp(g, 0.0, 0.999));
+	pixels[idx++] = static_cast<uint8_t>(256 * clamp(b, 0.0, 0.999));
 	pixels[idx++] = 255;
 }
 
@@ -243,6 +276,31 @@ bool hittable_list::hit(const ray& r, double t_min, double t_max, hit_record& re
 	return hit_anything;
 }
 
+class camera {
+public:
+	camera() {
+		auto aspect_ratio = 16.0 / 9.0;
+		auto viewport_height = 2.0;
+		auto viewport_width = aspect_ratio * viewport_height;
+		auto focal_length = 1.0;
+
+		origin = point3(0, 0, 0);
+		horizontal = vec3(viewport_width, 0.0, 0.0);
+		vertical = vec3(0.0, viewport_height, 0.0);
+		lower_left_corner = origin - horizontal / 2 - vertical / 2 - vec3(0, 0, focal_length);
+	}
+
+	ray get_ray(double u, double v) const {
+		return ray(origin, lower_left_corner + u * horizontal + v * vertical - origin);
+	}
+
+private:
+	point3 origin;
+	point3 lower_left_corner;
+	vec3 horizontal;
+	vec3 vertical;
+};
+
 color ray_color(const ray& r, const hittable& world) {
 	hit_record rec;
 	if (world.hit(r, 0, infinity, rec)) {
@@ -257,31 +315,26 @@ color ray_color(const ray& r, const hittable& world) {
 const auto aspect_ratio = 16.0 / 9.0;
 const int image_width = 384;
 const int image_height = static_cast<int>(image_width / aspect_ratio);
+const int samples_per_pixel = 100;
 void gmain() {
-
-	std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
-
-	auto viewport_height = 2.0;
-	auto viewport_width = aspect_ratio * viewport_height;
-	auto focal_length = 1.0;
-
-	auto origin = point3(0, 0, 0);
-	auto horizontal = vec3(viewport_width, 0, 0);
-	auto vertical = vec3(0, viewport_height, 0);
-	auto lower_left_corner = origin - horizontal / 2 - vertical / 2 - vec3(0, 0, focal_length);
 
 	hittable_list world;
 	world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
 	world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
 
+	camera cam;
+
 	for (int j = image_height - 1; j >= 0; --j) {
 		std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
 		for (int i = 0; i < image_width; ++i) {
-			auto u = double(i) / (image_width - 1);
-			auto v = double(j) / (image_height - 1);
-			ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
-			color pixel_color = ray_color(r, world);
-			write_color(std::cout, pixel_color);
+			color pixel_color(0, 0, 0);
+			for (int s = 0; s < samples_per_pixel; ++s) {
+				auto u = (i + random_double()) / (image_width - 1);
+				auto v = (j + random_double()) / (image_height - 1);
+				ray r = cam.get_ray(u, v);
+				pixel_color += ray_color(r, world);
+			}
+			write_color(std::cout, pixel_color, samples_per_pixel);
 		}
 	}
 
