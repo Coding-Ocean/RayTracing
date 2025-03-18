@@ -159,9 +159,9 @@ void write_color(std::ostream& out, color& pixel_color, int samples_per_pixel) {
 
 	// 色の合計をサンプル数で割る
 	auto scale = 1.0 / samples_per_pixel;
-	r *= scale;
-	g *= scale;
-	b *= scale;
+	r = sqrt(scale * r);
+	g = sqrt(scale * g);
+	b = sqrt(scale * b);
 
 	pixels[idx++] = static_cast<uint8_t>(256 * clamp(r, 0.0, 0.999));
 	pixels[idx++] = static_cast<uint8_t>(256 * clamp(g, 0.0, 0.999));
@@ -335,7 +335,7 @@ color ray_color(const ray& r, const hittable& world, int depth) {
 }
 
 const auto aspect_ratio = 16.0 / 9.0;
-const int image_width = 384;
+const int image_width = 384*2;
 const int image_height = static_cast<int>(image_width / aspect_ratio);
 void gmain() {
 	const int samples_per_pixel = 100;
