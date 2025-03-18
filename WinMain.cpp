@@ -159,9 +159,9 @@ void write_color(std::ostream& out, color& pixel_color, int samples_per_pixel) {
 
 	// 色の合計をサンプル数で割る
 	auto scale = 1.0 / samples_per_pixel;
-	r *= scale;
-	g *= scale;
-	b *= scale;
+	r = sqrt(scale * r);
+	g = sqrt(scale * g);
+	b = sqrt(scale * b);
 
 	pixels[idx++] = static_cast<uint8_t>(256 * clamp(r, 0.0, 0.999));
 	pixels[idx++] = static_cast<uint8_t>(256 * clamp(g, 0.0, 0.999));
@@ -317,6 +317,13 @@ private:
 	vec3 vertical;
 };
 
+//vec3 random_unit_vector() {
+//	auto a = random_double(0, 2 * pi);
+//	auto z = random_double(-1, 1);
+//	auto r = sqrt(1 - z * z);
+//	return vec3(r * cos(a), r * sin(a), z);
+//}
+
 color ray_color(const ray& r, const hittable& world, int depth) {
 	hit_record rec;
 
@@ -326,6 +333,7 @@ color ray_color(const ray& r, const hittable& world, int depth) {
 
 	if (world.hit(r, 0, infinity, rec)) {
 		point3 target = rec.p + rec.normal + random_in_unit_sphere();
+		//point3 target = rec.p + rec.normal + random_unit_vector();
 		return 0.5 * ray_color(ray(rec.p, target - rec.p), world, depth - 1);
 	}
 
@@ -335,7 +343,7 @@ color ray_color(const ray& r, const hittable& world, int depth) {
 }
 
 const auto aspect_ratio = 16.0 / 9.0;
-const int image_width = 384;
+const int image_width = 384*2;
 const int image_height = static_cast<int>(image_width / aspect_ratio);
 void gmain() {
 	const int samples_per_pixel = 100;
