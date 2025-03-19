@@ -15,6 +15,7 @@ void write_color(color& pixel_color) {
 	pixels[idx++] = 255;
 }
 
+const char* output_filename = "image.png"; 
 int image_width = 384;
 int image_height = 384;
 
@@ -54,6 +55,8 @@ void gmain() {
 #include<Windows.h>
 #include<DirectXMath.h>
 #include<wrl.h>//ComPtr
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include"stb_image_write.h"
 
 using namespace DirectX;
 using namespace Microsoft::WRL;//ComPtr
@@ -117,7 +120,8 @@ D3D12_VERTEX_BUFFER_VIEW Vbv;
 ComPtr<ID3D12Resource> TextureBuffer = nullptr;
 
 //エントリーポイント
-INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
+//INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
+int main()
 {
 	//システム
 	{
@@ -549,6 +553,7 @@ INT WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ INT)
 				int bytePerPixel = 4;
 				pixels = new uint8_t[image_width * image_height * bytePerPixel];
 				gmain();
+				stbi_write_png(output_filename, image_width, image_height, bytePerPixel, pixels, image_width* bytePerPixel);
 
 				//１行のピッチを256の倍数にしておく(バッファサイズは256の倍数でなければいけない)
 				const UINT64 alignedRowPitch = (image_width * bytePerPixel + 0xff) & ~0xff;
