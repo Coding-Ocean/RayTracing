@@ -334,6 +334,7 @@ color ray_color(const ray& r, const hittable& world, int depth) {
 	return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0);
 }
 
+const char* output_filename = "image.png";
 const auto aspect_ratio = 16.0 / 9.0;
 const int image_width = 384*2;
 const int image_height = static_cast<int>(image_width / aspect_ratio);
@@ -393,6 +394,8 @@ void gmain() {
 #include<Windows.h>
 #include<DirectXMath.h>
 #include<wrl.h>//ComPtr
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include"stb_image_write.h"
 
 using namespace DirectX;
 using namespace Microsoft::WRL;//ComPtr
@@ -889,6 +892,7 @@ int main()
 				int bytePerPixel = 4;
 				pixels = new uint8_t[image_width * image_height * bytePerPixel];
 				gmain();
+				stbi_write_png(output_filename, image_width, image_height, bytePerPixel, pixels, image_width* bytePerPixel);
 
 				//１行のピッチを256の倍数にしておく(バッファサイズは256の倍数でなければいけない)
 				const UINT64 alignedRowPitch = (image_width * bytePerPixel + 0xff) & ~0xff;
